@@ -57,7 +57,110 @@ module t2a_spi
 
 
 /*
- add your code here 
+reg [31:0] clk_count;
+reg [SPI_WORD_LENGTH-1:0] tx_latched;
+integer bit_index;
+
+always @(posedge clk_50MHz or negedge rst_n) begin
+    if (!rst_n) begin
+        sclk_out  <= CPOL;
+        cs_out    <= 1'b1;
+        mosi_output <= 1'b0;
+        rx_data   <= {SPI_WORD_LENGTH{1'b0}};
+        busy      <= 1'b0;
+        clk_count <= 0;
+        bit_index <= 0;
+        tx_latched <= {SPI_WORD_LENGTH{1'b0}};
+    end
+    else begin
+        if (!busy) begin
+            sclk_out <= CPOL;
+            cs_out   <= 1'b1;
+            clk_count <= 0;
+
+            if (start) begin
+                tx_latched <= tx_data;
+                rx_data <= {SPI_WORD_LENGTH{1'b0}};
+                bit_index <= 0;
+                busy <= 1'b1;
+                cs_out <= 1'b0;
+
+                mosi_output <= LSB_FIRST
+                    ? tx_data[0]
+                    : tx_data[SPI_WORD_LENGTH-1];
+            end
+        end
+        else begin
+            if (clk_count >= HALF_PERIOD - 1) begin
+                clk_count <= 0;
+                sclk_out <= ~sclk_out;
+
+                if (sclk_out == CPOL) begin
+                    // Leading edge
+                    if (CPHA == 1'b0) begin
+                        // Receive data
+                        rx_data[LSB_FIRST
+                            ? bit_index
+                            : (SPI_WORD_LENGTH-1-bit_index)]
+                            <= miso_input;
+
+                        if (bit_index < SPI_WORD_LENGTH-1)
+                            bit_index <= bit_index + 1;
+                        else
+                            bit_index <= SPI_WORD_LENGTH;
+                    end
+                    else begin
+                        // Transmit data
+                        if (bit_index < SPI_WORD_LENGTH)
+                            mosi_output <= tx_latched[
+                                LSB_FIRST
+                                ? bit_index
+                                : (SPI_WORD_LENGTH-1-bit_index)
+                            ];
+                    end
+                end
+                else begin
+                    // Trailing edge
+                    if (CPHA == 1'b0) begin
+                        if (bit_index >= SPI_WORD_LENGTH) begin
+                            busy <= 1'b0;
+                            cs_out <= 1'b1;
+                            sclk_out <= CPOL;
+                            mosi_output <= 1'b0;
+                        end
+                        else begin
+                            mosi_output <= tx_latched[
+                                LSB_FIRST
+                                ? bit_index
+                                : (SPI_WORD_LENGTH-1-bit_index)
+                            ];
+                        end
+                    end
+                    else begin
+                        // Receive data
+                        rx_data[LSB_FIRST
+                            ? bit_index
+                            : (SPI_WORD_LENGTH-1-bit_index)]
+                            <= miso_input;
+
+                        if (bit_index == SPI_WORD_LENGTH-1) begin
+                            busy <= 1'b0;
+                            cs_out <= 1'b1;
+                            sclk_out <= CPOL;
+                            mosi_output <= 1'b0;
+                        end
+                        else begin
+                            bit_index <= bit_index + 1;
+                        end
+                    end
+                end
+            end
+            else begin
+                clk_count <= clk_count + 1;
+            end
+        end
+    end
+end
  */
 
 //////////////////DO NOT MAKE ANY CHANGES BELOW THIS LINE //////////////////
