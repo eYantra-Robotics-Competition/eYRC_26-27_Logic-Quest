@@ -1,5 +1,4 @@
-
-// riscv_cpu.v - single-cycle RISC-V CPU Processor
+// riscv_cpu.v - 5-stage pipelined RISC-V CPU Processor
 
 module riscv_cpu (
     input         clk, reset,
@@ -13,19 +12,19 @@ module riscv_cpu (
     output [31:0] PCW, ALUResultW, WriteDataW
 );
 
-wire        ALUSrc, RegWrite, Branch, Jump, Jalr;
+wire        ALUSrc, RegWrite, MemWriteD, Branch, Jump, Jalr;
 wire [1:0]  ResultSrc, ImmSrc;
 wire [2:0]  ALUControl;
+wire [31:0] InstrD;
 
-controller  c   (Instr[6:0], Instr[14:12], Instr[30],
-                ResultSrc, MemWrite, ALUSrc,
+controller  c   (InstrD[6:0], InstrD[14:12], InstrD[30],
+                ResultSrc, MemWriteD, ALUSrc,
                 RegWrite, Branch, Jump, Jalr, ImmSrc, ALUControl);
 
 datapath    dp  (clk, reset, ResultSrc,
-                ALUSrc, RegWrite, ImmSrc, ALUControl, Branch, Jump, Jalr,
-                PC, Instr, Mem_WrAddr, Mem_WrData, ReadData, Result, PCW, ALUResultW, WriteDataW);
-
-// Eventually will be removed while adding pipeline registers
-assign funct3 = Instr[14:12];
+                ALUSrc, RegWrite, MemWriteD, ImmSrc, ALUControl, Branch, Jump, Jalr,
+                PC, Instr, InstrD, MemWrite, funct3,
+                Mem_WrAddr, Mem_WrData, ReadData, Result,
+                PCW, ALUResultW, WriteDataW);
 
 endmodule
