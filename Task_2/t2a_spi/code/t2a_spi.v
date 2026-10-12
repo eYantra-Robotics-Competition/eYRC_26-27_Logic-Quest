@@ -57,7 +57,60 @@ module t2a_spi
 
 
 /*
- add your code here 
+localparam CW = $clog2(HALF_PERIOD + 1);
+localparam TW = $clog2(2 * SPI_WORD_LENGTH);
+
+reg [CW-1:0]               hc;
+reg [TW-1:0]               tcnt;
+reg [SPI_WORD_LENGTH-1:0]  tx_shift;
+reg [SPI_WORD_LENGTH-1:0]  rx_shift;
+
+always @(*) begin
+    cs_out      = ~busy;
+    mosi_output = tx_shift[SPI_WORD_LENGTH-1];
+end
+
+always @(posedge clk_50MHz or negedge rst_n) begin
+    if (!rst_n) begin
+        busy     <= 1'b0;
+        sclk_out <= 1'b0;
+        hc       <= {CW{1'b0}};
+        tcnt     <= {TW{1'b0}};
+        tx_shift <= {SPI_WORD_LENGTH{1'b0}};
+        rx_shift <= {SPI_WORD_LENGTH{1'b0}};
+        rx_data  <= {SPI_WORD_LENGTH{1'b0}};
+    end
+    else if (!busy) begin
+        sclk_out <= 1'b0;
+        if (start) begin
+            busy     <= 1'b1;
+            tx_shift <= tx_data;
+            hc       <= {CW{1'b0}};
+            tcnt     <= {TW{1'b0}};
+        end
+    end
+    else begin
+        if (hc == HALF_PERIOD) begin
+            hc       <= 1;
+            sclk_out <= ~sclk_out;
+            tcnt     <= tcnt + 1'b1;
+
+            if (!sclk_out) begin
+                rx_shift <= {rx_shift[SPI_WORD_LENGTH-2:0], miso_input};
+            end
+            else begin
+                tx_shift <= {tx_shift[SPI_WORD_LENGTH-2:0], 1'b0};
+                if (tcnt == 2*SPI_WORD_LENGTH - 1) begin
+                    busy    <= 1'b0;
+                    rx_data <= rx_shift;
+                end
+            end
+        end
+        else begin
+            hc <= hc + 1'b1;
+        end
+    end
+end
  */
 
 //////////////////DO NOT MAKE ANY CHANGES BELOW THIS LINE //////////////////
