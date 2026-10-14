@@ -57,7 +57,70 @@ module t2a_spi
 
 
 /*
- add your code here 
+reg [31:0] clk_count;
+reg [SPI_WORD_LENGTH-1:0] tx_latched;
+reg [SPI_WORD_LENGTH-1:0] rx_shift;
+integer bit_index;
+
+always @(posedge clk_50MHz or negedge rst_n) begin
+    if (!rst_n) begin
+        sclk_out   <= CPOL;
+        cs_out     <= 1'b1;
+        mosi_output <= 1'b0;
+        rx_data    <= {SPI_WORD_LENGTH{1'b0}};
+        busy       <= 1'b0;
+        clk_count  <= 0;
+        bit_index  <= 0;
+        tx_latched <= {SPI_WORD_LENGTH{1'b0}};
+        rx_shift   <= {SPI_WORD_LENGTH{1'b0}};
+    end
+    else begin
+        if (!busy) begin
+            sclk_out  <= CPOL;
+            cs_out    <= 1'b1;
+            clk_count <= 0;
+
+            if (start) begin
+                tx_latched <= tx_data;
+                rx_shift   <= {SPI_WORD_LENGTH{1'b0}};
+                bit_index  <= 0;
+                busy       <= 1'b1;
+                cs_out     <= 1'b0;
+                mosi_output <= tx_data[SPI_WORD_LENGTH-1];
+            end
+        end
+        else begin
+            if (clk_count < HALF_PERIOD) begin
+                clk_count <= clk_count + 1'b1;
+            end
+            else begin
+                clk_count <= 1;
+                sclk_out <= ~sclk_out;
+
+                if (sclk_out == CPOL) begin
+                    rx_shift <= {
+                        rx_shift[SPI_WORD_LENGTH-2:0],
+                        miso_input
+                    };
+                    bit_index <= bit_index + 1;
+                end
+                else begin
+                    if (bit_index >= SPI_WORD_LENGTH) begin
+                        sclk_out <= CPOL;
+                        rx_data <= rx_shift;
+                        busy <= 1'b0;
+                        cs_out <= 1'b1;
+                        clk_count <= 0;
+                    end
+                    else begin
+                        mosi_output <=
+                            tx_latched[SPI_WORD_LENGTH-1-bit_index];
+                    end
+                end
+            end
+        end
+    end
+end
  */
 
 //////////////////DO NOT MAKE ANY CHANGES BELOW THIS LINE //////////////////
