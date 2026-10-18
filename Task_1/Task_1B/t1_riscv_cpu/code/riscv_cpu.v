@@ -1,5 +1,4 @@
-
-// riscv_cpu.v - single-cycle RISC-V CPU Processor
+// riscv_cpu.v - Single-cycle RISC-V CPU Processor
 
 module riscv_cpu (
     input         clk, reset,
@@ -11,17 +10,47 @@ module riscv_cpu (
     output [31:0] Result
 );
 
-wire        ALUSrc, RegWrite, Jump, Zero;
-wire [1:0]  ResultSrc, ImmSrc;
+wire        ALUSrc, RegWrite, Jump, LUI, JALR, Zero;
+wire [1:0]  ResultSrc;
+wire [2:0]  ImmSrc;
 wire [2:0]  ALUControl;
+wire        PCSrc;
 
-controller  c   (Instr[6:0], Instr[14:12], Instr[30], Zero,
-                ResultSrc, MemWrite, PCSrc, ALUSrc, RegWrite, Jump,
-                ImmSrc, ALUControl);
+controller c (
+    .op(Instr[6:0]),
+    .funct3(Instr[14:12]),
+    .funct7b5(Instr[30]),
+    .Zero(Zero),
+    .ResultSrc(ResultSrc),
+    .MemWrite(MemWrite),
+    .PCSrc(PCSrc),
+    .ALUSrc(ALUSrc),
+    .RegWrite(RegWrite),
+    .Jump(Jump),
+    .LUI(LUI),
+    .JALR(JALR),
+    .ImmSrc(ImmSrc),
+    .ALUControl(ALUControl)
+);
 
-datapath    dp  (clk, reset, ResultSrc, PCSrc,
-                ALUSrc, RegWrite, ImmSrc, ALUControl,
-                Zero, PC, Instr, Mem_WrAddr, Mem_WrData, ReadData, Result);
+datapath dp (
+    .clk(clk),
+    .reset(reset),
+    .ResultSrc(ResultSrc),
+    .PCSrc(PCSrc),
+    .ALUSrc(ALUSrc),
+    .RegWrite(RegWrite),
+    .ImmSrc(ImmSrc),
+    .ALUControl(ALUControl),
+    .LUI(LUI),
+    .JALR(JALR),
+    .Zero(Zero),
+    .PC(PC),
+    .Instr(Instr),
+    .Mem_WrAddr(Mem_WrAddr),
+    .Mem_WrData(Mem_WrData),
+    .ReadData(ReadData),
+    .Result(Result)
+);
 
 endmodule
-
