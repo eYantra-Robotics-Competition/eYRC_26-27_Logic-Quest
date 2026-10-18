@@ -25,9 +25,40 @@ module pwm_generator(
 
 //////////////////DO NOT MAKE ANY CHANGES ABOVE THIS LINE //////////////////
 
-/*
- add your code here 
- */
+reg [12:0] clk_count;
+reg [4:0] pwm_count;
+
+always @(posedge clk_5MHz or negedge reset_n) begin
+    if (!reset_n) begin
+        clk_count <= 13'd0;
+        clk_500Hz <= 1'b0;
+    end
+    else if (clk_count == 13'd4999) begin
+        clk_count <= 13'd0;
+        clk_500Hz <= ~clk_500Hz;
+    end
+    else begin
+        clk_count <= clk_count + 1'b1;
+    end
+end
+
+always @(posedge clk_500Hz or negedge reset_n) begin
+    if (!reset_n) begin
+        pwm_count <= 5'd0;
+        pwm_signal <= 1'b0;
+    end
+    else begin
+        if (pwm_count == 5'd31)
+            pwm_count <= 5'd0;
+        else
+            pwm_count <= pwm_count + 1'b1;
+
+        if (pwm_count < pulse_width)
+            pwm_signal <= 1'b1;
+        else
+            pwm_signal <= 1'b0;
+    end
+end
  
 //////////////////DO NOT MAKE ANY CHANGES BELOW THIS LINE//////////////////
 
