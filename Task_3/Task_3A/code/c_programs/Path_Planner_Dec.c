@@ -4,7 +4,6 @@
 * Computes the shortest path on the Logic Quest arena (nodes N1..N36), with the
 * line weights of Figure 1 on the Task 3A page: straight line 5, ring arcs
 * 7 / 11 / 15 / 19 (inner ring to outermost ring), wavy line N1-N36 100.
-* Same structure as the EcoMender Bot (EB) Task 2B path planner.
 *
 * Inputs : current_node, next_node, is_encrypted
 *   current_node     : where the bot is, 1..36. The path starts here.
